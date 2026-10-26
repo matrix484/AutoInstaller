@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.env
+.venv/
+.pytest_cache/
+build/
+dist/
+*.spec
+output/runs/*
+!output/runs/.gitkeep
