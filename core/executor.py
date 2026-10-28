@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
-from typing import List
+from typing import Callable, List, Optional
 
 from package_managers.winget import install_package
 
@@ -12,18 +12,34 @@ class Executor:
         self.run_dir = run_dir
         self.activity: List[str] = []
 
-    def run_batch_script(self, script_path: Path) -> int:
-        result = subprocess.run(
-            [str(script_path)],
-            capture_output=True,
+    def run_batch_script(
+        self,
+        script_path: Path,
+        stream_callback: Optional[Callable[[str], None]] = None,
+    ) -> int:
+        process = subprocess.Popen(
+            ["cmd.exe", "/c", str(script_path)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             text=True,
-            timeout=600,
-            shell=True,
-            check=False,
+            bufsize=1,
+            shell=False,
         )
-        self.activity.append(result.stdout)
-        self.activity.append(result.stderr)
-        return result.returncode
+
+        output_lines: List[str] = []
+        if process.stdout is not None:
+            for line in iter(process.stdout.readline, ""):
+                text = line.rstrip("\r\n")
+                if not text:
+                    continue
+                output_lines.append(text)
+                if stream_callback is not None:
+                    stream_callback(text)
+
+        process.stdout.close() if process.stdout is not None else None
+        return_code = process.wait(timeout=600)
+        self.activity.extend(output_lines)
+        return return_code
 
     def install_applications(self, manifest: dict) -> List[str]:
         installed: List[str] = []

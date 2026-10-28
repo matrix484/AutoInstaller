@@ -1,10 +1,13 @@
+import io
 import json
 import sys
 import types
 import unittest
+from pathlib import Path
 from unittest.mock import Mock, patch
 
 from ai.llm_client import LLMClient
+from core.executor import Executor
 
 
 class TestLLMClient(unittest.TestCase):
@@ -116,6 +119,16 @@ class TestLLMClient(unittest.TestCase):
                 "Git.Git",
             )
 
+    def test_local_planner_supports_broader_software_names(self):
+        with patch.dict("os.environ", {"LLM_PROVIDER": "gemini"}, clear=True):
+            client = LLMClient()
+            result = client.generate_plan("Install Firefox, Krita, and Inkscape")
+
+        package_ids = [app["package_id"] for app in result["manifest"]["applications"]]
+        self.assertIn("Mozilla.Firefox", package_ids)
+        self.assertIn("Krita.Krita", package_ids)
+        self.assertIn("Inkscape.Inkscape", package_ids)
+
     def test_existing_openai_key_keeps_openai_as_default_provider(self):
         with patch.dict(
             "os.environ",
@@ -140,6 +153,21 @@ class TestLLMClient(unittest.TestCase):
             client = LLMClient()
 
         self.assertEqual(client.gemini_model, "gemini-3.8-flash")
+
+    def test_executor_streams_live_progress_output(self):
+        process = Mock()
+        process.stdout = io.StringIO("Downloading package...\nProgress: 32%\nInstallation complete\n")
+        process.wait.return_value = 0
+        process.poll.return_value = 0
+
+        with patch("subprocess.Popen", return_value=process) as mocked_popen:
+            executor = Executor(Path("output/runs/test"))
+            messages = []
+            exit_code = executor.run_batch_script(Path("installer.bat"), stream_callback=messages.append)
+
+        self.assertEqual(exit_code, 0)
+        self.assertTrue(any("Progress: 32%" in line for line in messages))
+        mocked_popen.assert_called_once()
 
 
 if __name__ == "__main__":

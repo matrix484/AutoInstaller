@@ -7,8 +7,9 @@ Requirements:
 1. Return only valid JSON with two top-level fields: "batch_script" and "manifest".
 2. The batch_script must be a plain .bat script with only safe commands.
 3. If the user explicitly asks to install software, always include each requested application
-   that has a confidently identified, exact Winget package ID in both the manifest and script.
-   Do not omit an installation just because a separate configuration request is unsupported.
+   that can be confidently matched to an exact Winget package ID in both the manifest and script.
+   The user should be able to describe the software naturally in plain language; do not omit an
+   installation just because a separate configuration request is unsupported.
 4. If a requested application cannot be identified confidently, do not guess or invent a package
    ID. List that application and the reason under "manual_steps" in the manifest.
 5. Unsupported configuration must not prevent supported installations. Omit the unsupported

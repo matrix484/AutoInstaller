@@ -27,7 +27,7 @@ class Planner:
             ):
                 errors.append(
                     "Try a prompt focused on installation, such as "
-                    "'Install MySQL Server using its exact Winget package ID.' "
+                    "'Install Git' or 'Install Visual Studio Code'. "
                     "Do not include account passwords; database credential setup is unsupported."
                 )
             raise ValueError(

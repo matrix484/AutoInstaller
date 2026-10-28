@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import threading
 import tkinter as tk
 from pathlib import Path
@@ -128,9 +129,22 @@ class App:
             self.root.after(0, lambda: self.progress_var.set("50%"))
             executor = Executor(run_dir)
             script_path = run_dir / "install.bat"
-            result_code = executor.run_batch_script(script_path)
+
+            def stream_progress(line: str) -> None:
+                clean = line.strip()
+                if not clean:
+                    return
+                self.root.after(0, lambda text=clean: self.append_log(text))
+                match = re.search(r"(\d{1,3}(?:\.\d+)?)%", clean)
+                if match:
+                    percent = max(50, min(99, int(float(match.group(1)))))
+                    self.root.after(0, lambda value=percent: self.progress.configure(value=value))
+                    self.root.after(0, lambda value=percent: self.progress_var.set(f"{value}%"))
+
+            result_code = executor.run_batch_script(script_path, stream_callback=stream_progress)
             output = "\n".join(executor.activity)
-            self.root.after(0, lambda: self.append_log(output or "No installer output captured."))
+            if not output.strip():
+                self.root.after(0, lambda: self.append_log("No installer output captured."))
 
             self.root.after(0, lambda: self.set_status("Configuring..."))
             self.root.after(0, lambda: self.progress.configure(value=75))

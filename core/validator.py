@@ -29,7 +29,7 @@ class Validator:
             errors.append("Manifest must include an 'applications' list.")
         elif not apps:
             errors.append(
-                "No applications were identified. Provide software with an exact Winget package ID; "
+                "No applications were identified. Provide the software name clearly; "
                 "database account and password configuration is not supported."
             )
 

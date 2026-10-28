@@ -108,14 +108,47 @@ class LLMClient:
         return message
 
     def _fallback_plan(self, prompt: str) -> dict[str, Any]:
-        package_ids = []
+        package_id_map = (
+            ("git", "Git.Git"),
+            ("visual studio code", "Microsoft.VisualStudioCode"),
+            ("vscode", "Microsoft.VisualStudioCode"),
+            ("code", "Microsoft.VisualStudioCode"),
+            ("python", "Python.Python.3.12"),
+            ("firefox", "Mozilla.Firefox"),
+            ("mozilla firefox", "Mozilla.Firefox"),
+            ("krita", "Krita.Krita"),
+            ("inkscape", "Inkscape.Inkscape"),
+            ("7zip", "7zip.7zip"),
+            ("7-zip", "7zip.7zip"),
+            ("vlc", "VideoLAN.VLC"),
+            ("notepad++", "Notepad++.Notepad++"),
+            ("notepad plus plus", "Notepad++.Notepad++"),
+            ("google chrome", "Google.Chrome"),
+            ("chrome", "Google.Chrome"),
+            ("discord", "Discord.Discord"),
+            ("gimp", "GIMP.GIMP"),
+            ("blender", "BlenderFoundation.Blender"),
+            ("docker desktop", "Docker.DockerDesktop"),
+            ("nodejs", "OpenJS.NodeJS.LTS"),
+            ("node.js", "OpenJS.NodeJS.LTS"),
+            ("node", "OpenJS.NodeJS.LTS"),
+            ("obs studio", "OBSProject.OBSStudio"),
+            ("obs", "OBSProject.OBSStudio"),
+            ("postman", "Postman.Postman"),
+            ("slack", "SlackTechnologies.Slack"),
+            ("steam", "Valve.Steam"),
+            ("telegram", "Telegram.TelegramDesktop"),
+            ("zoom", "Zoom.Zoom"),
+            ("winrar", "RARLab.WinRAR"),
+        )
+
         lowered = prompt.lower()
-        if "git" in lowered:
-            package_ids.append("Git.Git")
-        if "visual studio code" in lowered or "vscode" in lowered or "code" in lowered:
-            package_ids.append("Microsoft.VisualStudioCode")
-        if "python" in lowered:
-            package_ids.append("Python.Python.3.12")
+        package_ids = []
+        seen = set()
+        for keyword, package_id in package_id_map:
+            if keyword in lowered and package_id not in seen:
+                package_ids.append(package_id)
+                seen.add(package_id)
 
         lines = ["@echo off", "title Auto Installer", "echo Starting installation..."]
         for index, package_id in enumerate(package_ids, start=1):
